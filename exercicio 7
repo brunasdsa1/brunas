@@ -1,0 +1,109 @@
+import tkinter as tk
+from tkinter import messagebox
+import re
+
+class AvaliadorExpressao:
+    def __init__(self):
+        self.entrada = ""
+
+    def avaliar(self, expressao):
+        try:
+            self.entrada = expressao
+            resultado = self._avaliar_expressao(expressao)
+            return resultado
+        except ZeroDivisionError:
+            raise ZeroDivisionError("Divisão por zero não permitida.")
+        except OverflowError:
+            raise OverflowError("Número muito grande para processar.")
+        except Exception as e:
+            raise SyntaxError(f"Erro de sintaxe: {e}")
+
+    def _avaliar_expressao(self, expressao):        
+        expressao = expressao.replace(' ', '')
+        if not self._validar_parenteses(expressao):
+            raise SyntaxError("Parênteses desequilibrados.")
+
+        return self._avaliar_termos(expressao)
+
+    def _avaliar_termos(self, expressao):
+        """Avalia termos de adição e subtração"""
+        termos = re.split(r'(\+|\-)', expressao)
+        total = self._avaliar_fatores(termos[0])
+        i = 1
+        while i < len(termos):
+            operador = termos[i]
+            fator = self._avaliar_fatores(termos[i + 1])
+            if operador == '+':
+                total += fator
+            elif operador == '-':
+                total -= fator
+            i += 2
+        return total
+
+    def _avaliar_fatores(self, expressao):
+        """Avalia fatores de multiplicação e divisão"""
+        fatores = re.split(r'(\*|\/)', expressao)
+        total = self._avaliar_parens(fatores[0])
+        i = 1
+        while i < len(fatores):
+            operador = fatores[i]
+            fator = self._avaliar_parens(fatores[i + 1])
+            if operador == '*':
+                total *= fator
+            elif operador == '/':
+                if fator == 0:
+                    raise ZeroDivisionError("Divisão por zero não permitida.")
+                total /= fator
+            i += 2
+        return total
+
+    def _avaliar_parens(self, expressao):
+        """Avalia expressões dentro de parênteses"""
+        while '(' in expressao:
+            expressao = re.sub(r'\(([^()]+)\)', lambda x: str(self._avaliar_termos(x.group(1))), expressao)
+        return self._avaliar_unario(expressao)
+
+    def _avaliar_unario(self, expressao):
+        """Avalia números e operadores unários"""
+        if re.match(r'^\d+(\.\d+)?$', expressao):
+            return float(expressao)
+        else:
+            raise SyntaxError(f"Operador inválido ou número: {expressao}")
+
+    def _validar_parenteses(self, expressao):
+        """Valida a quantidade de parênteses"""
+        return expressao.count('(') == expressao.count(')')
+
+def calcular():
+    expressao = entry.get().strip()
+    if not expressao:
+        messagebox.showwarning("Entrada vazia", "A expressão está em branco.")
+        return
+
+    avaliador = AvaliadorExpressao()
+    try:
+        resultado = avaliador.avaliar(expressao)
+        resultado_label.config(text=f"Resultado: {resultado:.2f}")
+    except ZeroDivisionError as zde:
+        messagebox.showerror("Erro", str(zde))
+    except OverflowError as oe:
+        messagebox.showerror("Erro", str(oe))
+    except SyntaxError as se:
+        messagebox.showerror("Erro de Sintaxe", str(se))
+    except Exception as e:
+        messagebox.showerror("Erro inesperado", f"Ocorreu um erro inesperado: {e}")
+
+root = tk.Tk()
+root.title("Avaliador de Expressão Matemática")
+
+tk.Label(root, text="Digite a expressão matemática:").pack(padx=10, pady=5)
+entry = tk.Entry(root, width=50)
+entry.pack(padx=10, pady=5)
+
+calcular_button = tk.Button(root, text="Calcular", command=calcular)
+calcular_button.pack(padx=10, pady=10)
+
+resultado_label = tk.Label(root, text="")
+resultado_label.pack(padx=10, pady=10)
+
+root.mainloop()

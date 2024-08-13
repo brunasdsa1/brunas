@@ -1,2 +1,37 @@
 import tkinter as tk
-from tkinter imoport 
+from tkinter import messagebox
+from datetime import datetime
+ 
+def calcular_idade():
+    try:
+        ano_nascimento = entrada_ano.get()
+        ano_nascimento = int(ano_nascimento)  
+       
+        ano_atual = datetime.now().year
+        if ano_nascimento > ano_atual:
+            raise ValueError("Ano de nascimento não pode ser no futuro.")
+        if ano_nascimento < 1900:
+            raise ValueError("Ano de nascimento não pode ser antes de 1900.")
+        idade = ano_atual - ano_nascimento
+        resultado_label.config(text=f"Sua idade é: {idade} anos")
+    except ValueError as ve:
+        messagebox.showerror("Erro", str(ve))
+        resultado_label.config(text="")
+    except Exception as e:
+        messagebox.showerror("Erro", "Entrada inválida. Por favor, insira um ano válido.")
+        resultado_label.config(text="")
+ 
+root = tk.Tk()
+root.title("Calculadora de Idade")
+ 
+tk.Label(root, text="Digite seu ano de nascimento:").pack(pady=10)
+entrada_ano = tk.Entry(root)
+entrada_ano.pack(pady=5)
+ 
+calcular_button = tk.Button(root, text="Calcular Idade", command=calcular_idade)
+calcular_button.pack(pady=10)
+ 
+resultado_label = tk.Label(root, text="")
+resultado_label.pack(pady=10)
+ 
+root.mainloop()

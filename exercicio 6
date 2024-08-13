@@ -1,0 +1,47 @@
+import tkinter as tk
+from tkinter import messagebox
+from statistics import mean, median, mode, StatisticsError
+
+def calcular_estatisticas():
+    try:        
+        entrada = entry.get().strip()
+        
+        if not entrada:
+            raise ValueError("A lista de números está vazia.")        
+        
+        numeros = [float(x) for x in entrada.split(',')]
+        
+        if not numeros:
+            raise ValueError("A lista de números está vazia.")        
+        
+        media = mean(numeros)
+        mediana = median(numeros)
+        moda = mode(numeros)        
+        
+        resultado_label.config(text=f"Média: {media:.2f}\nMediana: {mediana:.2f}\nModa: {moda}")
+    
+    except ValueError as ve:        
+        messagebox.showwarning("Entrada inválida", str(ve))
+    except StatisticsError as se:        
+        messagebox.showwarning("Erro de Estatística", str(se))
+    except ZeroDivisionError:        
+        messagebox.showerror("Erro", "Erro de divisão por zero.")
+    except OverflowError:        
+        messagebox.showerror("Erro", "Número muito grande para calcular.")
+    except Exception as e:        
+        messagebox.showerror("Erro inesperado", f"Ocorreu um erro inesperado: {e}")
+
+root = tk.Tk()
+root.title("Calculadora de Estatísticas")
+
+tk.Label(root, text="Digite números separados por vírgula:").pack(padx=10, pady=5)
+entry = tk.Entry(root, width=50)
+entry.pack(padx=10, pady=5)
+
+calcular_button = tk.Button(root, text="Calcular Estatísticas", command=calcular_estatisticas)
+calcular_button.pack(padx=10, pady=10)
+
+resultado_label = tk.Label(root, text="")
+resultado_label.pack(padx=10, pady=10)
+
+root.mainloop()

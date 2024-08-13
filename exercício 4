@@ -1,0 +1,83 @@
+import tkinter as tk
+from tkinter import messagebox
+import os
+import re
+
+ARQUIVO_CONTATOS = 'contatos.txt'
+
+def validar_telefone(telefone):
+    """Valida o formato do número de telefone."""
+    return re.match(r'^\d{10,15}$', telefone) is not None
+
+def carregar_contatos():
+    """Carrega contatos do arquivo e retorna um dicionário."""
+    contatos = {}
+    if os.path.exists(ARQUIVO_CONTATOS):
+        try:
+            with open(ARQUIVO_CONTATOS, 'r', encoding='utf-8') as arquivo:
+                for linha in arquivo:
+                    nome, telefone = linha.strip().split(',')
+                    contatos[nome] = telefone
+        except Exception as e:
+            messagebox.showerror("Erro ao carregar contatos", f"Erro: {e}")
+    return contatos
+
+def salvar_contatos(contatos):
+    """Salva contatos no arquivo."""
+    try:
+        with open(ARQUIVO_CONTATOS, 'w', encoding='utf-8') as arquivo:
+            for nome, telefone in contatos.items():
+                arquivo.write(f"{nome},{telefone}\n")
+    except IOError as e:
+        messagebox.showerror("Erro ao salvar contatos", f"Erro: {e}")
+
+def adicionar_contato():
+    """Adiciona um novo contato e atualiza a lista."""
+    nome = nome_entry.get().strip()
+    telefone = telefone_entry.get().strip()
+
+    if not nome or not telefone:
+        messagebox.showwarning("Entrada inválida", "Nome e telefone não podem estar vazios.")
+        return
+
+    if not validar_telefone(telefone):
+        messagebox.showwarning("Número inválido", "O número de telefone deve ter entre 10 e 15 dígitos.")
+        return
+
+    contatos = carregar_contatos()
+    
+    if nome in contatos:
+        messagebox.showwarning("Nome duplicado", "Já existe um contato com esse nome.")
+        return
+
+    contatos[nome] = telefone
+    salvar_contatos(contatos)
+    atualizar_lista()
+
+def atualizar_lista():
+    """Atualiza a lista de contatos exibida na interface."""
+    contatos = carregar_contatos()
+    lista_contatos.delete(1.0, tk.END)
+    for nome, telefone in contatos.items():
+        lista_contatos.insert(tk.END, f"{nome}: {telefone}\n")
+
+root = tk.Tk()
+root.title("Gerenciador de Contatos")
+
+tk.Label(root, text="Nome:").pack(padx=10, pady=5)
+nome_entry = tk.Entry(root)
+nome_entry.pack(padx=10, pady=5)
+
+tk.Label(root, text="Telefone:").pack(padx=10, pady=5)
+telefone_entry = tk.Entry(root)
+telefone_entry.pack(padx=10, pady=5)
+
+adicionar_button = tk.Button(root, text="Adicionar Contato", command=adicionar_contato)
+adicionar_button.pack(padx=10, pady=10)
+
+lista_contatos = tk.Text(root, wrap=tk.WORD, height=10, width=50)
+lista_contatos.pack(padx=10, pady=10)
+
+atualizar_lista()
+
+root.mainloop()

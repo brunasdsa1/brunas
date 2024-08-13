@@ -1,0 +1,102 @@
+import tkinter as tk
+from tkinter import messagebox
+import random
+import os
+import threading
+import json
+
+ARQUIVO_PONTUACAO = 'pontuacoes.json'
+
+def carregar_pontuacoes():
+    """Carrega as pontuações do arquivo, ou retorna um dicionário vazio se o arquivo não existir ou estiver corrompido."""
+    if not os.path.exists(ARQUIVO_PONTUACAO):
+        return {}
+    try:
+        with open(ARQUIVO_PONTUACAO, 'r', encoding='utf-8') as arquivo:
+            return json.load(arquivo)
+    except (json.JSONDecodeError, IOError) as e:
+        messagebox.showerror("Erro ao carregar pontuações", f"Erro: {e}")
+        return {}
+
+def salvar_pontuacoes(pontuacoes):
+    """Salva as pontuações no arquivo."""
+    try:
+        with open(ARQUIVO_PONTUACAO, 'w', encoding='utf-8') as arquivo:
+            json.dump(pontuacoes, arquivo, indent=4)
+    except IOError as e:
+        messagebox.showerror("Erro ao salvar pontuações", f"Erro: {e}")
+
+def iniciar_jogo():
+    """Inicia um novo jogo com um número aleatório e reseta a pontuação."""
+    global numero_secreto, tentativas
+    numero_secreto = random.randint(1, 100)
+    tentativas = 0
+    resultado_label.config(text="Faça sua adivinhação!")
+
+def verificar_adivinhacao():
+    """Verifica a adivinhação do jogador e atualiza a pontuação se necessário."""
+    global tentativas
+    try:
+        adivinhacao = int(entry.get().strip())
+        if adivinhacao < 1 or adivinhacao > 100:
+            raise ValueError("Adivinhação fora do intervalo válido (1-100).")
+        tentativas += 1
+        if adivinhacao < numero_secreto:
+            resultado_label.config(text="Muito baixo! Tente novamente.")
+        elif adivinhacao > numero_secreto:
+            resultado_label.config(text="Muito alto! Tente novamente.")
+        else:
+            resultado_label.config(text=f"Correto! Você acertou em {tentativas} tentativas.")
+            atualizar_pontuacoes(tentativas)
+            iniciar_jogo()  
+    except ValueError as ve:
+        messagebox.showwarning("Entrada inválida", str(ve))
+    except Exception as e:
+        messagebox.showerror("Erro inesperado", f"Ocorreu um erro inesperado: {e}")
+
+def atualizar_pontuacoes(tentativas):
+    """Atualiza o arquivo de pontuações com a nova pontuação."""
+    nome = nome_entry.get().strip()
+    if not nome:
+        messagebox.showwarning("Nome inválido", "Por favor, insira um nome para salvar a pontuação.")
+        return
+
+    pontuacoes = carregar_pontuacoes()
+    if nome not in pontuacoes or pontuacoes[nome] > tentativas:
+        pontuacoes[nome] = tentativas
+        salvar_pontuacoes(pontuacoes)
+        mostrar_pontuacoes()
+
+def mostrar_pontuacoes():
+    """Exibe as melhores pontuações na interface."""
+    pontuacoes = carregar_pontuacoes()
+    pontuacoes_str = "\n".join(f"{nome}: {pontuacao} tentativas" for nome, pontuacao in sorted(pontuacoes.items(), key=lambda item: item[1]))
+    pontuacoes_label.config(text=f"Melhores Pontuações:\n{pontuacoes_str}")
+
+root = tk.Tk()
+root.title("Jogo de Adivinhação")
+
+tk.Label(root, text="Nome:").pack(padx=10, pady=5)
+nome_entry = tk.Entry(root, width=30)
+nome_entry.pack(padx=10, pady=5)
+
+tk.Label(root, text="Digite seu palpite (1-100):").pack(padx=10, pady=5)
+entry = tk.Entry(root, width=30)
+entry.pack(padx=10, pady=5)
+
+iniciar_button = tk.Button(root, text="Iniciar Jogo", command=iniciar_jogo)
+iniciar_button.pack(padx=10, pady=5)
+
+verificar_button = tk.Button(root, text="Verificar Adivinhação", command=verificar_adivinhacao)
+verificar_button.pack(padx=10, pady=5)
+
+resultado_label = tk.Label(root, text="")
+resultado_label.pack(padx=10, pady=5)
+
+pontuacoes_label = tk.Label(root, text="Melhores Pontuações:")
+pontuacoes_label.pack(padx=10, pady=5)
+
+iniciar_jogo()
+mostrar_pontuacoes()
+
+root.mainloop()
